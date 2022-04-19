@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/adammy/go-api-gateway/pkg/server"
+	"github.com/SpotOnInc/go-api-gateway/pkg/server"
 )
 
 func main() {

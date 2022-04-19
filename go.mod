@@ -1,4 +1,4 @@
-module github.com/adammy/go-api-gateway
+module github.com/SpotOnInc/go-api-gateway
 
 go 1.18
 
