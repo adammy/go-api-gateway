@@ -1,7 +1,6 @@
 package authentication
 
 type jwk struct {
-
 	// ID of the key
 	ID *string `json:"kid"`
 

@@ -17,14 +17,20 @@ var (
 )
 
 func TestNewService(t *testing.T) {
+	t.Parallel()
+
 	svc := NewService("")
+
 	assert.NotNil(t, svc)
-	assert.Implements(t, (*service)(nil), svc)
-	assert.IsType(t, &servicer{}, svc)
+	assert.Implements(t, (*Service)(nil), svc)
+	assert.IsType(t, &Servicer{}, svc)
 }
 
 func TestSetPublicKeys(t *testing.T) {
+	t.Parallel()
+
 	tests := map[string]struct {
+		name       string
 		jwks       interface{}
 		statusCode int
 		expected   map[string]*rsa.PublicKey
@@ -117,16 +123,20 @@ func TestSetPublicKeys(t *testing.T) {
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 			var (
 				server *httptest.Server
-				svc    *servicer
+				svc    *Servicer
 			)
 
 			if !tc.httpError {
 				server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					w.Header().Set("Content-Type", "application/json")
 					w.WriteHeader(tc.statusCode)
-					json.NewEncoder(w).Encode(tc.jwks)
+					err := json.NewEncoder(w).Encode(tc.jwks)
+					if err != nil {
+						assert.FailNow(t, "unable to encode jwks data: %w", err)
+					}
 				}))
 				svc = NewService(server.URL)
 			} else {

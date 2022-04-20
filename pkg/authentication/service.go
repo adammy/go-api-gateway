@@ -12,38 +12,41 @@ import (
 	jwt "github.com/golang-jwt/jwt/v4"
 )
 
-var _ service = (*servicer)(nil)
+var _ Service = (*Servicer)(nil)
 
 const (
 	commonExponent = 65537
 )
 
-type servicer struct {
-	jwksUri    string
+// Servicer implements Service.
+type Servicer struct {
+	jwksURI    string
 	publicKeys map[string]*rsa.PublicKey
 }
 
-func NewService(jwksUri string) *servicer {
-	return &servicer{
-		jwksUri:    jwksUri,
+// NewService creates a servicer.
+func NewService(jwksURI string) *Servicer {
+	return &Servicer{
+		jwksURI:    jwksURI,
 		publicKeys: make(map[string]*rsa.PublicKey),
 	}
 }
 
-func (s *servicer) SetPublicKeys() error {
+// SetPublicKeys gets the public keys and caches them in-mem.
+func (s *Servicer) SetPublicKeys() error {
 	var jwks rawJwks
 
-	r, err := http.Get(s.jwksUri)
+	resp, err := http.Get(s.jwksURI)
 	if err != nil {
 		return fmt.Errorf("http error getting keys: %w", err)
 	}
-	defer r.Body.Close()
+	defer resp.Body.Close()
 
-	if r.StatusCode != http.StatusOK {
-		return fmt.Errorf("http status code is non-200: %d", r.StatusCode)
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("http status code is non-200: %d", resp.StatusCode)
 	}
 
-	err = json.NewDecoder(r.Body).Decode(&jwks)
+	err = json.NewDecoder(resp.Body).Decode(&jwks)
 	if err != nil {
 		return fmt.Errorf("error decoding json: %w", err)
 	}
@@ -62,10 +65,14 @@ func (s *servicer) SetPublicKeys() error {
 	return nil
 }
 
-func (s *servicer) Verify(tokenString string) error {
-	jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+// Verify TODO.
+func (s *Servicer) Verify(tokenString string) error {
+	_, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		return []byte("AllYourBase"), nil
 	})
+	if err != nil {
+		return fmt.Errorf("TODO %w", err)
+	}
 
 	return errors.New("not implemented")
 }
