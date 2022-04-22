@@ -5,17 +5,17 @@ import (
 )
 
 type UnauthorizedError struct {
-	message string
+	Message string `json:"message"`
 }
 
 func (e *UnauthorizedError) Error() string {
-	return fmt.Sprintf("unauthorized: %s", e.message)
+	return fmt.Sprintf("unauthorized: %s", e.Message)
 }
 
 type ForbiddenError struct {
-	message string
+	Message string `json:"message"`
 }
 
 func (e *ForbiddenError) Error() string {
-	return fmt.Sprintf("forbidden: %s", e.message)
+	return fmt.Sprintf("forbidden: %s", e.Message)
 }

@@ -136,23 +136,51 @@ func TestVerify(t *testing.T) {
 	tests := map[string]struct {
 		claims            jwt.StandardClaims
 		emptyToken        bool
+		emptyId           bool
 		forbiddenError    bool
 		unauthorizedError bool
 	}{
 		"valid jwt": {
-			claims: jwt.StandardClaims{Issuer: issuer, IssuedAt: now, NotBefore: now, ExpiresAt: now + 900},
+			claims: jwt.StandardClaims{
+				Issuer:    issuer,
+				IssuedAt:  now,
+				NotBefore: now,
+				ExpiresAt: now + 900,
+			},
 		},
-		"empty token": {emptyToken: true, unauthorizedError: true},
+		"empty token": {
+			emptyToken:        true,
+			unauthorizedError: true,
+		},
+		"no key id": {
+			emptyId:        true,
+			forbiddenError: true,
+		},
 		"expired jwt": {
-			claims:         jwt.StandardClaims{Issuer: issuer, IssuedAt: now, NotBefore: now, ExpiresAt: now - 900},
+			claims: jwt.StandardClaims{
+				Issuer:    issuer,
+				IssuedAt:  now,
+				NotBefore: now,
+				ExpiresAt: now - 900,
+			},
 			forbiddenError: true,
 		},
 		"not before is later": {
-			claims:         jwt.StandardClaims{Issuer: issuer, IssuedAt: now, NotBefore: now + 900, ExpiresAt: now + 900},
+			claims: jwt.StandardClaims{
+				Issuer:    issuer,
+				IssuedAt:  now,
+				NotBefore: now + 900,
+				ExpiresAt: now + 900,
+			},
 			forbiddenError: true,
 		},
 		"invalid issuer": {
-			claims:         jwt.StandardClaims{Issuer: "invalid issuer", IssuedAt: now, NotBefore: now, ExpiresAt: now + 900},
+			claims: jwt.StandardClaims{
+				Issuer:    "invalid issuer",
+				IssuedAt:  now,
+				NotBefore: now,
+				ExpiresAt: now + 900,
+			},
 			forbiddenError: true,
 		},
 	}
@@ -161,18 +189,26 @@ func TestVerify(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			var (
 				tokenString string
+				publicKey   *rsa.PublicKey
+				token       string
+				err         error
 			)
 			svc := NewService("")
 
 			if !tc.emptyToken {
-				publicKey, token, err := getKeyAndToken(keyIds[0], tc.claims)
+				if !tc.emptyId {
+					publicKey, token, err = getKeyAndToken(keyIds[0], tc.claims)
+				} else {
+					publicKey, token, err = getKeyAndToken("", tc.claims)
+				}
+
 				if err != nil {
 					assert.FailNow(t, "unable to generate key and token")
 				}
 				tokenString = token
 				svc.AddPublicKey(keyIds[0], publicKey)
 			}
-			err := svc.Verify(tokenString)
+			err = svc.Verify(tokenString)
 
 			if tc.forbiddenError {
 				assert.Error(t, err)
@@ -217,7 +253,9 @@ func getKeyAndToken(id string, claims jwt.StandardClaims) (*rsa.PublicKey, strin
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
-	token.Header["kid"] = id
+	if id != "" {
+		token.Header["kid"] = id
+	}
 
 	tokenString, err := token.SignedString(privateKey)
 	if err != nil {

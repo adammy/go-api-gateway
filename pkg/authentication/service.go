@@ -67,21 +67,25 @@ func (s *Servicer) SetPublicKeys() error {
 // Verify the incoming JWT is valid.
 func (s *Servicer) Verify(tokenString string) error {
 	if tokenString == "" {
-		return &UnauthorizedError{message: "access token not provided"}
+		return &UnauthorizedError{Message: "access token not provided"}
 	}
 
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		return s.publicKeys[token.Header["kid"].(string)], nil
+		kid := token.Header["kid"]
+		if kid != nil && kid != "" {
+			return s.publicKeys[kid.(string)], nil
+		}
+		return nil, &ForbiddenError{Message: "kid not present in header"}
 	})
 
 	if err != nil {
-		return &ForbiddenError{message: err.Error()}
+		return &ForbiddenError{Message: err.Error()}
 	} else if !token.Valid {
-		return &ForbiddenError{message: "invalid token"}
+		return &ForbiddenError{Message: "invalid token"}
 	} else if token.Header["alg"] == nil {
-		return &ForbiddenError{message: "alg must be defined"}
+		return &ForbiddenError{Message: "alg must be defined"}
 	} else if token.Claims.(jwt.MapClaims)["iss"] != "https://id.adammy.com/oauth2/default" {
-		return &ForbiddenError{message: "invalid iss"}
+		return &ForbiddenError{Message: "invalid iss"}
 	}
 
 	return nil
