@@ -4,7 +4,6 @@ import (
 	"crypto/rsa"
 	"encoding/base64"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"math/big"
 	"net/http"
@@ -58,21 +57,37 @@ func (s *Servicer) SetPublicKeys() error {
 				N: new(big.Int).SetBytes(modulus),
 				E: commonExponent,
 			}
-			s.publicKeys[*jwk.ID] = &rsakey
+			s.AddPublicKey(*jwk.ID, &rsakey)
 		}
 	}
 
 	return nil
 }
 
-// Verify TODO.
+// Verify the incoming JWT is valid.
 func (s *Servicer) Verify(tokenString string) error {
-	_, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		return []byte("AllYourBase"), nil
-	})
-	if err != nil {
-		return fmt.Errorf("TODO %w", err)
+	if tokenString == "" {
+		return &UnauthorizedError{message: "access token not provided"}
 	}
 
-	return errors.New("not implemented")
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		return s.publicKeys[token.Header["kid"].(string)], nil
+	})
+
+	if err != nil {
+		return &ForbiddenError{message: err.Error()}
+	} else if !token.Valid {
+		return &ForbiddenError{message: "invalid token"}
+	} else if token.Header["alg"] == nil {
+		return &ForbiddenError{message: "alg must be defined"}
+	} else if token.Claims.(jwt.MapClaims)["iss"] != "https://id.adammy.com/oauth2/default" {
+		return &ForbiddenError{message: "invalid iss"}
+	}
+
+	return nil
+}
+
+// AddPublicKey adds a RSA key to the service.
+func (s *Servicer) AddPublicKey(id string, key *rsa.PublicKey) {
+	s.publicKeys[id] = key
 }

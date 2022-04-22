@@ -14,7 +14,7 @@ linters:
     - gci
     - goconst
     - godot
-    - gofumpt
+    - gofmt
     - gosimple
     - govet
     - ifshort
