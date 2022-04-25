@@ -1,4 +1,4 @@
-package authentication
+package auth
 
 import (
 	"crypto/rand"
@@ -24,10 +24,10 @@ const (
 )
 
 var (
-	keyIds        = []string{"123", "456"}
-	modulusBytes  = []byte{181, 166, 253, 160, 160, 26, 25, 180, 60, 34, 1, 32, 170, 247, 226, 116, 201, 18, 227, 252, 217, 9, 232, 183, 169, 47, 24, 94, 166, 216, 245, 207, 114, 241, 91, 0, 76, 200, 205, 236, 202, 104, 171, 50, 31, 213, 203, 52, 48, 168, 150, 237, 52, 175, 128, 170, 56, 86, 55, 70, 123, 137, 205, 198, 89, 30, 180, 120, 104, 36, 218, 138, 229, 178, 204, 119, 72, 235, 108, 107, 200, 200, 148, 128, 149, 20, 200, 150, 45, 223, 250, 121, 209, 173, 47, 21, 182, 191, 184, 1, 104, 51, 36, 137, 38, 147, 72, 224, 187, 172, 187, 98, 197, 90, 144, 37, 198, 35, 109, 197, 254, 106, 255, 105, 213, 132, 232, 96, 181, 189, 28, 28, 156, 202, 245, 8, 16, 167, 93, 235, 245, 10, 34, 41, 31, 197, 12, 135, 88, 25, 141, 44, 110, 232, 134, 80, 98, 140, 94, 188, 250, 179, 174, 217, 249, 105, 119, 215, 190, 122, 53, 114, 241, 8, 0, 79, 117, 31, 48, 22, 221, 83, 86, 152, 111, 204, 36, 52, 211, 5, 133, 35, 189, 185, 222, 54, 177, 188, 89, 131, 16, 130, 36, 121, 33, 21, 221, 50, 172, 219, 251, 130, 128, 164, 102, 254, 146, 60, 200, 169, 163, 104, 188, 127, 110, 73, 195, 60, 70, 237, 246, 165, 60, 224, 231, 42, 31, 25, 119, 231, 91, 168, 198, 249, 113, 183, 225, 102, 1, 9, 123, 155, 75, 129, 147, 239}
-	rsaKeyModulus = new(big.Int).SetBytes(modulusBytes)
-	now           = time.Now().Unix()
+	keyIds          = []string{"123", "456"}
+	rsaModulusBytes = []byte{181, 166, 253, 160, 160, 26, 25, 180, 60, 34, 1, 32, 170, 247, 226, 116, 201, 18, 227, 252, 217, 9, 232, 183, 169, 47, 24, 94, 166, 216, 245, 207, 114, 241, 91, 0, 76, 200, 205, 236, 202, 104, 171, 50, 31, 213, 203, 52, 48, 168, 150, 237, 52, 175, 128, 170, 56, 86, 55, 70, 123, 137, 205, 198, 89, 30, 180, 120, 104, 36, 218, 138, 229, 178, 204, 119, 72, 235, 108, 107, 200, 200, 148, 128, 149, 20, 200, 150, 45, 223, 250, 121, 209, 173, 47, 21, 182, 191, 184, 1, 104, 51, 36, 137, 38, 147, 72, 224, 187, 172, 187, 98, 197, 90, 144, 37, 198, 35, 109, 197, 254, 106, 255, 105, 213, 132, 232, 96, 181, 189, 28, 28, 156, 202, 245, 8, 16, 167, 93, 235, 245, 10, 34, 41, 31, 197, 12, 135, 88, 25, 141, 44, 110, 232, 134, 80, 98, 140, 94, 188, 250, 179, 174, 217, 249, 105, 119, 215, 190, 122, 53, 114, 241, 8, 0, 79, 117, 31, 48, 22, 221, 83, 86, 152, 111, 204, 36, 52, 211, 5, 133, 35, 189, 185, 222, 54, 177, 188, 89, 131, 16, 130, 36, 121, 33, 21, 221, 50, 172, 219, 251, 130, 128, 164, 102, 254, 146, 60, 200, 169, 163, 104, 188, 127, 110, 73, 195, 60, 70, 237, 246, 165, 60, 224, 231, 42, 31, 25, 119, 231, 91, 168, 198, 249, 113, 183, 225, 102, 1, 9, 123, 155, 75, 129, 147, 239}
+	rsaKeyModulus   = new(big.Int).SetBytes(rsaModulusBytes)
+	now             = time.Now().Unix()
 )
 
 func TestNewService(t *testing.T) {
@@ -47,8 +47,8 @@ func TestSetPublicKeys(t *testing.T) {
 		error      bool
 	}{
 		"all valid keys": {
-			jwks: rawJwks{
-				Keys: []jwk{
+			jwks: JWKSResponse{
+				Keys: []JWK{
 					getJwk(keyIds[0], "sig"),
 					getJwk(keyIds[1], "sig"),
 				},
@@ -66,8 +66,8 @@ func TestSetPublicKeys(t *testing.T) {
 			},
 		},
 		"some valid keys": {
-			jwks: rawJwks{
-				Keys: []jwk{
+			jwks: JWKSResponse{
+				Keys: []JWK{
 					getJwk(keyIds[0], "sig"),
 					getJwk(keyIds[1], "enc"),
 				},
@@ -81,7 +81,7 @@ func TestSetPublicKeys(t *testing.T) {
 			},
 		},
 		"no keys": {
-			jwks:       rawJwks{Keys: []jwk{}},
+			jwks:       JWKSResponse{Keys: []JWK{}},
 			statusCode: http.StatusOK,
 			expected:   map[string]*rsa.PublicKey{},
 		},
@@ -132,11 +132,24 @@ func TestSetPublicKeys(t *testing.T) {
 	}
 }
 
+func TestAddPublicKey(t *testing.T) {
+	svc := NewService("")
+	publicKey, _, err := getKeyAndToken(keyIds[0], jwt.StandardClaims{})
+	if err != nil {
+		assert.FailNow(t, "unable to generate key")
+	}
+
+	svc.AddPublicKey(keyIds[0], publicKey)
+
+	assert.Equal(t, map[string]*rsa.PublicKey{keyIds[0]: publicKey}, svc.publicKeys)
+}
+
 func TestVerify(t *testing.T) {
 	tests := map[string]struct {
 		claims            jwt.StandardClaims
 		emptyToken        bool
 		emptyId           bool
+		bearerPrefix      bool
 		forbiddenError    bool
 		unauthorizedError bool
 	}{
@@ -147,6 +160,7 @@ func TestVerify(t *testing.T) {
 				NotBefore: now,
 				ExpiresAt: now + 900,
 			},
+			bearerPrefix: true,
 		},
 		"empty token": {
 			emptyToken:        true,
@@ -154,6 +168,7 @@ func TestVerify(t *testing.T) {
 		},
 		"no key id": {
 			emptyId:        true,
+			bearerPrefix:   true,
 			forbiddenError: true,
 		},
 		"expired jwt": {
@@ -163,6 +178,7 @@ func TestVerify(t *testing.T) {
 				NotBefore: now,
 				ExpiresAt: now - 900,
 			},
+			bearerPrefix:   true,
 			forbiddenError: true,
 		},
 		"not before is later": {
@@ -172,6 +188,7 @@ func TestVerify(t *testing.T) {
 				NotBefore: now + 900,
 				ExpiresAt: now + 900,
 			},
+			bearerPrefix:   true,
 			forbiddenError: true,
 		},
 		"invalid issuer": {
@@ -181,7 +198,17 @@ func TestVerify(t *testing.T) {
 				NotBefore: now,
 				ExpiresAt: now + 900,
 			},
+			bearerPrefix:   true,
 			forbiddenError: true,
+		},
+		"no bearer prefix": {
+			claims: jwt.StandardClaims{
+				Issuer:    issuer,
+				IssuedAt:  now,
+				NotBefore: now,
+				ExpiresAt: now + 900,
+			},
+			unauthorizedError: true,
 		},
 	}
 
@@ -205,7 +232,12 @@ func TestVerify(t *testing.T) {
 				if err != nil {
 					assert.FailNow(t, "unable to generate key and token")
 				}
-				tokenString = token
+
+				if tc.bearerPrefix {
+					tokenString = "Bearer " + token
+				} else {
+					tokenString = token
+				}
 				svc.AddPublicKey(keyIds[0], publicKey)
 			}
 			err = svc.Verify(tokenString)
@@ -223,20 +255,8 @@ func TestVerify(t *testing.T) {
 	}
 }
 
-func TestAddPublicKey(t *testing.T) {
-	svc := NewService("")
-	publicKey, _, err := getKeyAndToken(keyIds[0], jwt.StandardClaims{})
-	if err != nil {
-		assert.FailNow(t, "unable to generate key")
-	}
-
-	svc.AddPublicKey(keyIds[0], publicKey)
-
-	assert.Equal(t, map[string]*rsa.PublicKey{keyIds[0]: publicKey}, svc.publicKeys)
-}
-
-func getJwk(id, use string) jwk {
-	return jwk{
+func getJwk(id, use string) JWK {
+	return JWK{
 		ID:        &id,
 		Type:      algorithmType,
 		Algorithm: algorithm,

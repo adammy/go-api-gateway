@@ -1,2 +1,2 @@
-// Package server contains the http server of the API gateway application.
+// Package server contains the HTTP server of the API gateway app.
 package server
