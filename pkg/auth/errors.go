@@ -5,6 +5,8 @@ type UnauthorizedError struct {
 	Err error
 }
 
+// Error returns a friendly error message.
+// Helps to meet the error interface.
 func (e *UnauthorizedError) Error() string {
 	return e.Err.Error()
 }
@@ -14,6 +16,8 @@ type ForbiddenError struct {
 	Err error
 }
 
+// Error returns a friendly error message.
+// Helps to meet the error interface.
 func (e *ForbiddenError) Error() string {
 	return e.Err.Error()
 }
